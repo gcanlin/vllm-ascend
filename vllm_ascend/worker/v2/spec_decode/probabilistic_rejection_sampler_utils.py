@@ -1,4 +1,4 @@
-# Adapt from https://github.com/vllm-project/vllm/blob/main/vllm/v1/worker/gpu/spec_decode/rejection_sampler_utils.py
+# Adapt from https://github.com/vllm-project/vllm/blob/main/vllm/v1/worker/gpu/spec_decode/probabilistic_rejection_sampler_utils.py
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 #
@@ -19,7 +19,7 @@
 
 import torch
 from vllm.triton_utils import tl, triton
-from vllm.v1.worker.gpu.spec_decode.rejection_sampler_utils import (
+from vllm.v1.worker.gpu.spec_decode.probabilistic_rejection_sampler_utils import (
     _compute_block_stats_kernel,
     _compute_global_lse,
     _insert_resampled_kernel,
@@ -312,7 +312,7 @@ def _probabilistic_rejection_kernel(
     tl.store(draft_rejected_logsumexp_ptr + req_idx, draft_lse)
 
 
-def rejection_sample(
+def probabilistic_rejection_sample(
     # [num_logits, V]
     target_logits: torch.Tensor,
     # [max_num_reqs, num_speculative_steps, V]

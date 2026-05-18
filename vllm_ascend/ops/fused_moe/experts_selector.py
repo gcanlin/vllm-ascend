@@ -19,7 +19,7 @@ from collections.abc import Callable
 import torch
 
 from vllm_ascend.device.device_op import DeviceOperator
-from vllm_ascend.utils import get_weight_prefetch_method
+from vllm_ascend.utils import enable_custom_op, get_weight_prefetch_method
 
 
 def select_experts(
@@ -134,6 +134,11 @@ def check_npu_moe_gating_top_k(
     scoring_func: str = "softmax",
     custom_routing_function: Callable | None = None,
 ):
+    # Lazy-load the C extension. Without this, torch.ops._C_ascend.moe_gating_top_k
+    # is unresolved for callers (e.g. vllm-omni diffusion worker) that don't hit
+    # AscendRMSNorm first; fall back to native if the lib can't be loaded.
+    if not enable_custom_op():
+        return False
     if scoring_func == "sigmoid" and not renormalize:  # sigmoid + renorm=0 is not supported in current branch
         return False
     if custom_routing_function is not None:
