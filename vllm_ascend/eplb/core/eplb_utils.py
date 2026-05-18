@@ -22,12 +22,14 @@ import numpy as np
 import torch
 from vllm.logger import logger
 
-from vllm_ascend.utils import vllm_version_is
+from vllm_ascend.utils import vllm_version_is  # noqa: F401
 
-if vllm_version_is("0.20.2"):
-    from vllm.model_executor.layers.fused_moe.layer import determine_expert_map
-else:
+# `expert_map_manager` (vllm PR #41046) only landed in v0.21.1rc0; on v0.20.2
+# and v0.21.0 the function still lives in `fused_moe.layer`.
+try:
     from vllm.model_executor.layers.fused_moe.expert_map_manager import determine_expert_map
+except ImportError:
+    from vllm.model_executor.layers.fused_moe.layer import determine_expert_map
 
 
 def expert_file_to_tensor(expert_map_path, layer_id):

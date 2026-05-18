@@ -1,7 +1,22 @@
 from vllm.v1.worker.gpu import input_batch, model_runner, structured_outputs
 from vllm.v1.worker.gpu.sample import bad_words, gumbel, logprob, penalties, prompt_logprob, sampler, states
-from vllm.v1.worker.gpu.spec_decode import rejection_sampler, rejection_sampler_utils
+from vllm.v1.worker.gpu.spec_decode import rejection_sampler
 from vllm.v1.worker.gpu.spec_decode.eagle import speculator
+
+# vllm PR #41035 (v0.21.1rc0) merged probabilistic + synthetic rejection sampler
+# utils into a single `rejection_sampler_utils` module and renamed the sample
+# entry point from `probabilistic_rejection_sample` to `rejection_sample`. On
+# v0.21.0 we still have the pre-rename layout.
+try:
+    from vllm.v1.worker.gpu.spec_decode import rejection_sampler_utils
+
+    _rejection_sample_attr = "rejection_sample"
+except ImportError:
+    from vllm.v1.worker.gpu.spec_decode import (
+        probabilistic_rejection_sampler_utils as rejection_sampler_utils,
+    )
+
+    _rejection_sample_attr = "probabilistic_rejection_sample"
 
 from vllm_ascend.worker.v2.input_batch import post_update
 from vllm_ascend.worker.v2.sample.bad_words import apply_bad_words
@@ -30,5 +45,5 @@ gumbel.apply_temperature = apply_temperature
 states.apply_temperature = apply_temperature
 logprob.compute_token_logprobs = compute_token_logprobs
 structured_outputs._apply_grammar_bitmask_kernel = _apply_grammar_bitmask_kernel
-rejection_sampler_utils.rejection_sample = npu_rejection_sample
-rejection_sampler.rejection_sample = npu_rejection_sample
+setattr(rejection_sampler_utils, _rejection_sample_attr, npu_rejection_sample)
+setattr(rejection_sampler, _rejection_sample_attr, npu_rejection_sample)

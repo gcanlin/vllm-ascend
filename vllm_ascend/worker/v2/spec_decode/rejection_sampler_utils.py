@@ -19,11 +19,20 @@
 
 import torch
 from vllm.triton_utils import tl, triton
-from vllm.v1.worker.gpu.spec_decode.rejection_sampler_utils import (
-    _compute_block_stats_kernel,
-    _compute_global_lse,
-    _insert_resampled_kernel,
-)
+# vllm PR #41035 (v0.21.1rc0) renamed `probabilistic_rejection_sampler_utils`
+# to `rejection_sampler_utils`. On v0.21.0 the old module is still in place.
+try:
+    from vllm.v1.worker.gpu.spec_decode.rejection_sampler_utils import (
+        _compute_block_stats_kernel,
+        _compute_global_lse,
+        _insert_resampled_kernel,
+    )
+except ImportError:
+    from vllm.v1.worker.gpu.spec_decode.probabilistic_rejection_sampler_utils import (
+        _compute_block_stats_kernel,
+        _compute_global_lse,
+        _insert_resampled_kernel,
+    )
 
 
 @triton.jit
